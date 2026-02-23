@@ -1,15 +1,36 @@
 # Explanation: `main.py`
 
 ## Purpose
-`main.py` serves as the primary orchestration daemon for the Python-based lock system or simulation. It integrates the core auto-locking logic and manages the broader application context.
+`main.py` serves as the primary orchestration daemon for the Python-based lock system or simulation. It integrates the core auto-locking logic and manages the broader application context, like locking the OS level screen based on presence.
 
-## Logic & Flow
-- **Daemon Initialization**: Sets up logging, configuration tracking, and establishes the continuous loop for monitoring presence.
-- **Device Monitoring integration**: It calls upon lower-level scanning modules to continuously check for the target BLE payload or MAC address.
-- **Action Triggers**: Once presence or absence is verified, it safely delegates the OS-level lock command or the hardware relay trigger command.
+## Logic Flow Visualization
 
-## Role in the System
-It's the central nervous system of the software version of the lock, running persistently in the background on the host machine.
+```mermaid
+stateDiagram-v2
+    [*] --> Initialization
+    Initialization --> TargetMonitoring
+    
+    state TargetMonitoring {
+        [*] --> CheckingConnection
+        CheckingConnection --> Reconnecting : Disconnected
+        Reconnecting --> CheckingConnection : Try reconnect
+        
+        CheckingConnection --> ReadingRSSI : Connected
+        ReadingRSSI --> EvaluateSignal
+        
+        EvaluateSignal --> LockScreen : RSSI < Threshold
+        EvaluateSignal --> UnlockScreen : RSSI > Threshold
+        EvaluateSignal --> CheckingConnection : Loop back
+        
+        LockScreen --> Status_LOCKED
+        UnlockScreen --> Status_UNLOCKED
+    }
+```
+
+## Process Flow
+- **Daemon Initialization**: Sets up logging and establishes the loop.
+- **Link Maintenance**: It forces "Sniff Mode" updates on macOS by requesting `remoteNameRequest_action_` so that the RSSI actually updates. **This is a crucial hack** for real-time tracking on Mac.
+- **OS Actions**: Uses Quartz and Obj-C bridges to physically sleep/lock the mac or type the password.
 
 ## Source Code
 
