@@ -3,9 +3,6 @@
 
 > A security-first, invisible Bluetooth Low Energy proximity lock that uses your phone as a silent key. No apps, no buttons, no visibility—just walk up and enter.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-ESP32-green.svg)](https://www.espressif.com/en/products/socs/esp32)
-[![BLE](https://img.shields.io/badge/BLE-5.0-orange.svg)](https://www.bluetooth.com/)
 
 ---
 
