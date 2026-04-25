@@ -247,7 +247,7 @@ Once the simulation validates your logic, deploy to actual hardware.
 | Jumper Wires | Male-to-Female | 5 | Connections |
 | Breadboard | Standard | 1 | Prototyping (optional) |
 
-**Estimated Cost**: $25-35 USD
+
 
 ### Wiring Diagram
 
