@@ -762,51 +762,6 @@ This is an educational/personal project. If you improve the design:
 
 ---
 
-## ⚠️ Disclaimer
-
-**IMPORTANT SAFETY & LEGAL NOTICES:**
-
-- This project involves **mains voltage** (12V PSU) and **physical security systems**
-- **Not suitable for commercial use** without proper safety certifications
-- Always install a **mechanical backup key** (fire safety compliance)
-- Test thoroughly before deploying on critical access points
-- Author assumes **no liability** for damages, injury, or security breaches
-- Check local building codes regarding electronic locks
-- **Use at your own risk**
-
-This is an educational project demonstrating BLE security concepts. For production deployments, consult licensed electricians and security professionals.
-
----
-
-## 📄 License
-
-MIT License - See `LICENSE` file for details
-
-**Key Points**:
-- ✅ Free for personal use
-- ✅ Modify and distribute
-- ❌ No warranty provided
-- ❌ Author not liable for damages
-
----
-
-## 🙏 Acknowledgments
-
-- **NimBLE-Arduino** by h2zero - Lightweight BLE stack
-- **Nordic Semiconductor** - nRF Connect app
-- **ESP32 Community** - Extensive documentation
-- **Bluetooth SIG** - BLE specification
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ghost-lock/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/ghost-lock/discussions)
-- **Email**: your.email@example.com (for security disclosures only)
-
----
-
 <div align="center">
 
 **Built with 🔒 by [Your Name]**
