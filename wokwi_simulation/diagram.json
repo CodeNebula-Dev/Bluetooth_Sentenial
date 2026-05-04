@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "env": "arduino-esp32" }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay",
+      "top": -90,
+      "left": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led",
+      "top": 20,
+      "left": 280,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 70,
+      "left": 280,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": 100,
+      "left": -150,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "esp:D34", "pot1:SIG", "green", [ "v0" ] ],
+    [ "esp:3V3", "pot1:VCC", "red", [ "v0" ] ],
+    [ "esp:GND.1", "pot1:GND", "black", [ "v0" ] ],
+    [ "esp:D4", "relay:IN", "green", [ "v0" ] ],
+    [ "esp:3V3", "relay:VCC", "red", [ "v0", "h-40" ] ],
+    [ "esp:GND.2", "relay:GND", "black", [ "v0", "h-60" ] ],
+    [ "relay:NO", "led:A", "yellow", [ "v0" ] ],
+    [ "esp:3V3", "relay:COM", "red", [ "v0" ] ],
+    [ "led:C", "r1:2", "green", [ "v0" ] ],
+    [ "r1:1", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
