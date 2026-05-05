@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghost Lock Simulator Web UI</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main style="padding: 20px; max-width: 1100px; margin: 0 auto">
+      <h1 style="margin: 0; font-size: 20px">Ghost Lock Simulator</h1>
+      <p style="margin-top: 6px; color: var(--muted)">
+        Drag the phone (or use Near/Far) and watch the ESP32 simulator react.
+      </p>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 16px;
+          margin-top: 16px;
+        "
+      >
+        <section
+          id="arena"
+          style="
+            position: relative;
+            height: 320px;
+            border-radius: 16px;
+            background: linear-gradient(
+              180deg,
+              rgba(255, 255, 255, 0.06),
+              rgba(255, 255, 255, 0.02)
+            );
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              left: 18%;
+              top: 50%;
+              transform: translate(-50%, -50%);
+              padding: 10px 12px;
+              border-radius: 12px;
+              background: rgba(255, 255, 255, 0.06);
+              border: 1px solid rgba(255, 255, 255, 0.12);
+            "
+          >
+            <div style="font-weight: 800">ESP32</div>
+            <div
+              id="doorText"
+              style="color: var(--bad); font-weight: 800; margin-top: 2px"
+            >
+              LOCKED
+            </div>
+            <div id="lockStateText" style="color: var(--muted); font-size: 12px; margin-top: 6px">
+              —
+            </div>
+          </div>
+
+          <div
+            style="
+              position: absolute;
+              left: 18%;
+              top: 50%;
+              width: 82%;
+              height: 2px;
+              background: rgba(255, 255, 255, 0.1);
+            "
+          ></div>
+
+          <div
+            style="
+              position: absolute;
+              left: 16px;
+              bottom: 14px;
+              right: 16px;
+              display: flex;
+              gap: 12px;
+              align-items: center;
+            "
+          >
+            <div style="width: 90px; color: var(--muted); font-size: 12px">RSSI</div>
+            <div id="rssiText" style="font-weight: 800">— dBm</div>
+            <div
+              style="
+                flex: 1;
+                height: 10px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                overflow: hidden;
+              "
+            >
+              <div id="rssiBarInner" style="height: 100%; width: 0%; background: var(--accent)"></div>
+            </div>
+            <div id="visibleText" style="width: 110px; text-align: right; color: var(--muted); font-size: 12px">
+              visible: —
+            </div>
+          </div>
+
+          <div
+            id="phone"
+            style="
+              position: absolute;
+              top: 50%;
+              left: 18%;
+              transform: translate(-50%, -50%);
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              border: 2px solid rgba(255, 255, 255, 0.25);
+              background: rgba(52, 211, 153, 0.22);
+              cursor: grab;
+              display: grid;
+              place-items: center;
+              user-select: none;
+            "
+          >
+            <div id="phoneGlyph" style="font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.9)">
+              📱
+            </div>
+          </div>
+        </section>
+
+        <section style="padding: 10px">
+          <div
+            style="
+              background: var(--panel);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 16px;
+              padding: 14px;
+            "
+          >
+            <div style="font-weight: 800">Firmware Mode</div>
+            <div style="display: flex; gap: 10px; margin-top: 10px">
+              <button id="btnPulse" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(96,165,250,0.30); color: var(--text); cursor: pointer">
+                Pulse
+              </button>
+              <button id="btnHold" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer">
+                Hold-Open
+              </button>
+            </div>
+
+            <div style="height: 14px"></div>
+
+            <div style="display: flex; gap: 10px">
+              <button id="btnAdv" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(52, 211, 153, 0.20); color: var(--text); cursor: pointer">
+                Phone: ON
+              </button>
+              <button id="btnGenuine" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(52, 211, 153, 0.20); color: var(--text); cursor: pointer">
+                Phone: REAL
+              </button>
+            </div>
+
+            <div style="height: 14px"></div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between">
+              <div>
+                <div style="font-weight: 800">Distance</div>
+                <div id="distanceSub" style="color: var(--muted); font-size: 12px">
+                  12.0m
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px">
+                <button id="btnNear" style="padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer">
+                  Near
+                </button>
+                <button id="btnFar" style="padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer">
+                  Far
+                </button>
+              </div>
+            </div>
+
+            <input
+              id="distanceSlider"
+              type="range"
+              min="0.5"
+              max="15"
+              step="0.1"
+              value="12"
+              style="width: 100%; margin-top: 10px"
+            />
+
+            <div style="height: 14px"></div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 10px">
+              <label style="flex: 1 1 140px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px">
+                <div style="color: var(--muted); font-size: 12px">RSSI Threshold</div>
+                <input id="rssiThresholdInput" type="number" value="-75" style="width: 100%; margin-top: 6px; background: transparent; border: none; color: var(--text)" />
+              </label>
+              <label style="flex: 1 1 160px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px">
+                <div style="color: var(--muted); font-size: 12px">Scan floor RSSI</div>
+                <input id="scanFloorInput" type="number" value="-100" style="width: 100%; margin-top: 6px; background: transparent; border: none; color: var(--text)" />
+              </label>
+            </div>
+
+            <div style="height: 14px"></div>
+
+            <div style="display: flex; gap: 10px">
+              <button id="btnReset" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer">
+                Reset Simulator
+              </button>
+              <button id="btnClearLogs" style="flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer">
+                Clear Logs
+              </button>
+            </div>
+
+            <div style="height: 16px"></div>
+            <div id="lastSeenAgeText" style="color: var(--muted); font-size: 12px">lastSeenAge: —</div>
+          </div>
+
+          <div style="margin-top: 14px; background: var(--panel); border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 14px">
+            <div style="font-weight: 800">ESP32 Serial Output</div>
+            <div id="logsBox" style="margin-top: 10px; height: 170px; overflow: auto; padding-right: 6px; border-radius: 12px; background: rgba(0,0,0,0.20); border: 1px solid rgba(255,255,255,0.08); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px">
+              No logs yet.
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
+
