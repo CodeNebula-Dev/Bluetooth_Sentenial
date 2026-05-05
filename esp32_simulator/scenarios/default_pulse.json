@@ -1,0 +1,22 @@
+{
+  "initial_phone": {
+    "advertising": false,
+    "genuine": true,
+    "distance_m": 12.0,
+    "manual_rssi": null
+  },
+  "authorized_uuids": [
+    "12345678-1234-1234-1234-1234567890ab"
+  ],
+  "events": [
+    { "t_ms": 1000, "action": "on" },
+    { "t_ms": 1100, "action": "near" },
+    { "t_ms": 12000, "action": "off" },
+
+    { "t_ms": 18000, "action": "far" },
+    { "t_ms": 18050, "action": "on" },
+    { "t_ms": 18150, "action": "near" },
+    { "t_ms": 22000, "action": "off" }
+  ]
+}
+
