@@ -4,13 +4,13 @@ import argparse
 import threading
 
 # ================= SIMULATION CONFIGURATION =================
-RSSI_THRESHOLD = -75        
-LOCK_TIMEOUT_MS = 1000   
+RSSI_THRESHOLD = -70        
+LOCK_TIMEOUT_MS = 5000   # 5 seconds grace period
 
 def get_current_time_ms():
     return int(time.time() * 1000)
 
-# --- REAL DEVICE LOGIC (Original "Step 82" Simple Loop) ---
+# --- REAL DEVICE LOGIC ---
 def run_real_loop(device_address):
     import IOBluetooth
     
@@ -27,50 +27,86 @@ def run_real_loop(device_address):
         print(f"Error: Device {device_address} not found.")
         sys.exit(1)
 
+    device_name = target_device.name() or device_address
+
     # Force cleaner start state
     if target_device.isConnected():
         print("Clearing stale connection state...")
         target_device.closeConnection()
         time.sleep(1.0)
 
-    print(f"--- MODE: REAL BLUETOOTH (Original) ---")
-    print(f"Target: {target_device.name()}")
-    print("WARNING: macOS RSSI often 'sticks'. Tests 'Disconnect' logic well, but 'Range' poorly.")
-    print("-" * 50)
+    print(f"╔══════════════════════════════════════════════════╗")
+    print(f"║         Real Bluetooth Monitor Mode             ║")
+    print(f"╚══════════════════════════════════════════════════╝")
+    print(f"Target: {device_name}")
+    print(f"Mode: Tries RSSI first, falls back to Connection-Based if RSSI unavailable")
+    print("-" * 55)
 
     last_seen_time = 0
     is_unlocked = False
-
     last_connect_attempt = 0
+    rssi_available = None  # None = unknown yet
+    rssi_fail_count = 0
 
     try:
         while True:
-            # 1. Non-Blocking Connection Handling
             now = get_current_time_ms()
             connected = target_device.isConnected()
             current_rssi = -127 
+            rssi_ok = False
 
             if not connected:
-                # Only try to reconnect every 2 seconds to prevent freezing the UI
+                # Try to reconnect every 2 seconds
                 if now - last_connect_attempt > 2000:
                     try: target_device.openConnection()
                     except: pass
                     last_connect_attempt = now
             
             if target_device.isConnected():
-                # target_device.remoteNameRequest_action_(None, None)
+                # Try to get RSSI
+                try:
+                    target_device.remoteNameRequest_action_(None, None)
+                except Exception:
+                    pass
+                
+                # Try rawRSSI
                 try:
                     raw = target_device.rawRSSI()
-                    # Filter: 127 is error. 0 is often error/glitch on Mac disconnect.
-                    # Valid RSSI is usually negative (e.g. -30 to -99)
-                    if raw != 127 and raw < 0:
+                    if raw != 127 and raw != 0 and raw < 0:
                         current_rssi = raw
+                        rssi_ok = True
+                        rssi_available = True
+                        rssi_fail_count = 0
                 except: pass
+                
+                # Try RSSI() as fallback
+                if not rssi_ok:
+                    try:
+                        alt = target_device.RSSI()
+                        if alt != 127 and alt != 0 and alt < 0:
+                            current_rssi = alt
+                            rssi_ok = True
+                            rssi_available = True
+                            rssi_fail_count = 0
+                    except: pass
+                
+                # If RSSI still unavailable — use connection as presence
+                if not rssi_ok:
+                    rssi_fail_count += 1
+                    if rssi_fail_count > 20 and rssi_available is None:
+                        # After ~2 seconds of failures, switch to connection mode
+                        rssi_available = False
+                        print(f"\n⚠ RSSI unavailable for {device_name}. Switching to CONNECTION-BASED mode.")
+                    
+                    if rssi_available == False:
+                        # Connection = present. Treat as strong signal.
+                        current_rssi = -40  # Fake "strong" RSSI to trigger unlock
+                        rssi_ok = True
             
-            # 2. Logic
+            # Logic
             now = get_current_time_ms()
             
-            if current_rssi >= RSSI_THRESHOLD:
+            if rssi_ok and current_rssi >= RSSI_THRESHOLD:
                 last_seen_time = now
             
             user_is_present = (now - last_seen_time < LOCK_TIMEOUT_MS)
@@ -78,20 +114,28 @@ def run_real_loop(device_address):
 
             if user_is_present:
                 if not is_unlocked:
-                    print(f"\n[ACTION] >>> UNLOCKING")
+                    print(f"\n[ACTION] >>> UNLOCKING 🔓")
                     is_unlocked = True
                 rem = (LOCK_TIMEOUT_MS - (now - last_seen_time)) / 1000.0
-                print(f"State: UNLOCKED | Signal: {current_rssi} dBm | Hold: {rem:.1f}s   ", end='\r')
+                mode = "RSSI" if rssi_available else "CONN"
+                if rssi_available == False:
+                    print(f"State: UNLOCKED 🔓 | Mode: {mode} | Connected ✓ | Hold: {rem:.1f}s   ", end='\r')
+                else:
+                    print(f"State: UNLOCKED 🔓 | Signal: {current_rssi} dBm | Hold: {rem:.1f}s   ", end='\r')
             else:
                 if is_unlocked:
-                    print(f"\n[ACTION] <<< LOCKING")
+                    print(f"\n[ACTION] <<< LOCKING 🔒")
                     is_unlocked = False
-                print(f"State: LOCKED   | Signal: {current_rssi} dBm | Waiting...       ", end='\r')
+                if rssi_available == False:
+                    conn_str = "Connected" if target_device.isConnected() else "Disconnected"
+                    print(f"State: LOCKED 🔒  | Mode: CONN | {conn_str} | Waiting...       ", end='\r')
+                else:
+                    print(f"State: LOCKED 🔒  | Signal: {current_rssi} dBm | Waiting...       ", end='\r')
             
             time.sleep(0.1)
 
     except KeyboardInterrupt:
-        print("\nStopped.")
+        print("\n\nStopped.")
 
 # --- MOCK LOGIC (Threaded Input) ---
 mock_rssi = -127
@@ -128,20 +172,20 @@ def run_mock_loop():
 
             if user_is_present:
                 if not is_unlocked:
-                    print(f"\n[ACTION] >>> UNLOCKING")
+                    print(f"\n[ACTION] >>> UNLOCKING 🔓")
                     is_unlocked = True
                 rem = (LOCK_TIMEOUT_MS - (now - last_seen_time)) / 1000.0
-                print(f"State: UNLOCKED | Signal: {current_rssi} dBm | Hold: {rem:.1f}s   ", end='\r')
+                print(f"State: UNLOCKED 🔓 | Signal: {current_rssi} dBm | Hold: {rem:.1f}s   ", end='\r')
             else:
                 if is_unlocked:
-                    print(f"\n[ACTION] <<< LOCKING")
+                    print(f"\n[ACTION] <<< LOCKING 🔒")
                     is_unlocked = False
-                print(f"State: LOCKED   | Signal: {current_rssi} dBm | Waiting...       ", end='\r')
+                print(f"State: LOCKED 🔒  | Signal: {current_rssi} dBm | Waiting...       ", end='\r')
             
             time.sleep(0.1)
 
     except KeyboardInterrupt:
-        print("\nStopped.")
+        print("\n\nStopped.")
 
 def main():
     parser = argparse.ArgumentParser()
